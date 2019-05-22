@@ -21,6 +21,8 @@
     var tousertoken = document.getElementById("tousertoken");
 
 
+
+
     function newUser()
     {
         api("{\"context\":\"NEWUSER\",\"username\":\""+usernameField.value+"\"}",
@@ -47,7 +49,15 @@
     {
         webSocket = new WebSocket("ws://11.100.109.22:8080/wschat");
         webSocket.onmessage = function(message) {
-            divMsg.innerHTML += "Server> : " + message.data;
+            let respData = JSON.parse(message.data);
+            if(respData)
+            {
+                divMsg.innerHTML += +": " + message.data;
+            }
+            else{
+                divMsg.innerHTML += "Response received but fata error";
+            }
+
 
         }
 
@@ -76,7 +86,7 @@
     function sendMsg(context, token, message, toToken) {
         var msgToSend = "{\"context\":\""+context+"\",\"token\":\""+token+"\",\"message\":\""+message+"\",\"toToken\":\""+toToken+"\"}";
         webSocket.send(msgToSend);
-        divMsg.innerHTML += "<div style='color:red'>Client> " + msgToSend +
+        divMsg.innerHTML += "<div style='color:red'>You:  " + message +
             "</div>"
         msgField.value = "";
     }

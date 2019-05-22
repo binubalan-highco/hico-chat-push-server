@@ -16,6 +16,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 public class ChatEndPoint extends WebSocketServlet {
@@ -55,7 +57,6 @@ public class ChatEndPoint extends WebSocketServlet {
 
         @Override
         protected void onBinaryMessage(ByteBuffer byteBuffer) throws IOException {
-            log.warn("No se soportan mensajes binarios");
             throw new UnsupportedOperationException("No se soportan mensajes binarios");
         }
 
@@ -132,8 +133,12 @@ public class ChatEndPoint extends WebSocketServlet {
                                             {
                                                 PoolObject poolObject = SharableSocketPool.poolObjects.get(i);
                                                 if(poolObject.token.equals(userTo.token)){
+                                                    SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd HH:mm z");
+                                                    Date date = new Date(System.currentTimeMillis());
                                                     //send if possible
-                                                    poolObject.wsOutbound.writeTextMessage(CharBuffer.wrap("{\"status\":1,\"message\":\""+wsEndpointRequest.message+"\"}"));
+                                                    poolObject.wsOutbound.writeTextMessage(CharBuffer
+                                                            .wrap("{\"status\":1,\"message\":\""+
+                                                                    wsEndpointRequest.message+"\":\"user\":"+user.toJson()+",\"date\":\""+formatter.format(date)+"\"}"));
                                                 }
 
                                             }
