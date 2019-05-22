@@ -62,7 +62,7 @@ public class TestServe extends HttpServlet {
                         String msg = "User added";
                         if(newUserResponse.status==0) msg = "Failure";
                         resp.getWriter().println("{\"status\":1,\"message\":\""+msg+"\",\"userId\":"+newUserResponse.userId
-                                +",\"token\":\""+newUserResponse.token+"\"}");
+                                +",\"token\":\""+newUserResponse.token+"\",\"userName\":\""+userName+"\"}");
                     }
                     else{
                         throw new Exception("No user name found");

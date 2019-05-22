@@ -4,6 +4,7 @@
 import java.io.IOException;
 
 import com.google.gson.Gson;
+import jdk.nashorn.internal.runtime.SharedPropertyMap;
 import org.apache.catalina.websocket.MessageInbound;
 import org.apache.catalina.websocket.StreamInbound;
 import org.apache.catalina.websocket.WebSocketServlet;
@@ -39,13 +40,18 @@ public class ChatEndPoint extends WebSocketServlet {
         @Override
         protected void onOpen(WsOutbound wsOutbound) {
 //            this.wsOutboundStore = wsOutbound;
-            log.info("Conexión abierta");
+
         }
 
         @Override
         protected void onClose(int status) {
-            log.info("Conexión cerrada");
+            //remove outbound from shared pool
+            if(SharableSocketPool.poolObjects!=null && SharableSocketPool.poolObjects.size()>0)
+            {
+                SharableSocketPool.poolObjects.remove(this.getWsOutbound());
+            }
         }
+
 
         @Override
         protected void onBinaryMessage(ByteBuffer byteBuffer) throws IOException {
@@ -82,7 +88,7 @@ public class ChatEndPoint extends WebSocketServlet {
                                     {
                                         for(int i=0,j=SharableSocketPool.poolObjects.size();i<j;i++)
                                         {
-                                           // if(SharableSocketPool.poolObjects.get(i).token.equals(user.token)) continue;
+                                            if(SharableSocketPool.poolObjects.get(i).token.equals(user.token)) continue;
                                             //send if possible
                                             SharableSocketPool.poolObjects.get(i).wsOutbound
                                                     .writeTextMessage(CharBuffer.wrap("{\"status\":1,\"message\":\""+user.userName+" joined!\"" +
@@ -114,19 +120,22 @@ public class ChatEndPoint extends WebSocketServlet {
                                         {
                                             throw new Exception("No receiver identity");
                                         }
-                                        DatabaseConnection.User userTo = new  DatabaseConnection().getUserByToken(wsEndpointRequest.token);
+                                        DatabaseConnection.User userTo = new  DatabaseConnection().getUserByToken(wsEndpointRequest.toToken);
                                         if(userTo==null || userTo.userId<=0)
                                         {
                                             throw new Exception("No such receiver found");
                                         }
+                                        System.out.println(user.userName+"-->"+ userTo.userName);
                                         if(SharableSocketPool.poolObjects!=null && SharableSocketPool.poolObjects.size()>0)
                                         {
                                             for(int i=0,j=SharableSocketPool.poolObjects.size();i<j;i++)
                                             {
                                                 PoolObject poolObject = SharableSocketPool.poolObjects.get(i);
+                                                if(poolObject.token.equals(userTo.token)){
+                                                    //send if possible
+                                                    poolObject.wsOutbound.writeTextMessage(CharBuffer.wrap("{\"status\":1,\"message\":\""+wsEndpointRequest.message+"\"}"));
+                                                }
 
-                                                //send if possible
-                                                poolObject.wsOutbound.writeTextMessage(CharBuffer.wrap("{\"status\":1,\"message\":\"You are pinged by somebody\"}"));
                                             }
                                         }else{
                                             throw new Exception("No users online");
