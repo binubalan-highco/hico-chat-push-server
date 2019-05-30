@@ -6,7 +6,9 @@
     <input type="button" value="get token" onclick="newUser()" /><br /><br /><br />
     <input id="messageField" type="text">
     <input type="text" id="tousertoken" placeholder="To user token" />
-    <input onclick="sendMsg('ONMESSAGE',usernameField.value,msgField.value,tousertoken.value);" value="send" type="button">
+    <input onclick="sendMsg('ONMESSAGE',usernameField.value,msgField.value,tousertoken.value,'');" value="send" type="button"><br /><br />
+    <input type="text" id="channel" placeholder="Channel name" />
+    <input onclick="sendMsg('ONBURSTSEND',usernameField.value,msgField.value,'',channel.value);" value="send to channel" type="button">
 </form>
 
 <div id="msg-box" style="width:90%; height: 500px; background: #eee; overflow:auto;"></div>
@@ -19,9 +21,7 @@
 
     var usernameField = document.getElementById("usernameField");
     var tousertoken = document.getElementById("tousertoken");
-
-
-
+    var channel = document.getElementById("channel");
 
     function newUser()
     {
@@ -63,7 +63,7 @@
 
         webSocket.onopen = function() {
             console.log("connection opened");
-            sendMsg('ONCONNECTION',usernameField.value,'','');
+            sendMsg('ONCONNECTION',usernameField.value,'','','');
         };
 
         webSocket.onclose = function() {
@@ -83,8 +83,9 @@
         xhttp.onreadystatechange = cb;
     }
 
-    function sendMsg(context, token, message, toToken) {
-        var msgToSend = "{\"context\":\""+context+"\",\"token\":\""+token+"\",\"message\":\""+message+"\",\"toToken\":\""+toToken+"\"}";
+    function sendMsg(context, token, message, toToken, channel) {
+        var msgToSend = "{\"context\":\""+context+"\",\"token\":\""+token+
+            "\",\"message\":\""+message+"\",\"toToken\":\""+toToken+"\",\"channel\":\""+channel+"\"}";
         webSocket.send(msgToSend);
         divMsg.innerHTML += "<div style='color:red'>You:  " + message +
             "</div>"

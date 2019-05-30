@@ -93,7 +93,7 @@ public class ChatEndPoint extends WebSocketServlet {
                                             //send if possible
                                             SharableSocketPool.poolObjects.get(i).wsOutbound
                                                     .writeTextMessage(CharBuffer.wrap("{\"status\":1,\"message\":\""+user.userName+" joined!\"" +
-                                                            ",\"user\":"+user.toJson()+"}"));
+                                                            ",\"user\":"+user.toJson()+",\"returnContext\":\"MEMBJOIN\"}"));
                                         }
                                     }
                                 }
@@ -136,11 +136,60 @@ public class ChatEndPoint extends WebSocketServlet {
                                                     SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd HH:mm z");
                                                     Date date = new Date(System.currentTimeMillis());
                                                     //send if possible
-                                                    poolObject.wsOutbound.writeTextMessage(CharBuffer
+                                                    CharBuffer out = CharBuffer
                                                             .wrap("{\"status\":1,\"message\":\""+
-                                                                    wsEndpointRequest.message+"\":\"user\":"+user.toJson()+",\"date\":\""+formatter.format(date)+"\"}"));
+                                                                    wsEndpointRequest.message+"\",\"user\":"+
+                                                                    user.toJson()+",\"date\":\""+formatter.format(date)
+                                                                    +"\",\"returnContext\":\"MESSAGERCVD\"}");
+                                                    System.out.println(out.toString());
+                                                    poolObject.wsOutbound.writeTextMessage(out);
                                                 }
 
+                                            }
+                                        }else{
+                                            throw new Exception("No users online");
+                                        }
+                                    }else{
+                                        throw new Exception("No message");
+                                    }
+
+                                }
+                                else{
+                                    throw new Exception("Unknown user");
+                                }
+                            }
+                            else{
+                                throw new Exception("Unknown context");
+                            }
+                        }
+                        else if(wsEndpointRequest.context.equals("ONBURSTSEND")){
+                            //send to all
+                            //get the token now
+                            if(wsEndpointRequest.token!=null && !wsEndpointRequest.token.isEmpty())
+                            {
+                                //get user by token
+                                DatabaseConnection.User user = new  DatabaseConnection().getUserByToken(wsEndpointRequest.token);
+                                if(user!=null && user.userId>0)
+                                {
+                                    if(wsEndpointRequest.message!=null && !wsEndpointRequest.message.isEmpty())
+                                    {
+                                        if(wsEndpointRequest.channel==null || wsEndpointRequest.channel.isEmpty())
+                                        {
+                                            throw new Exception("No channel specified");
+                                        }
+                                        if(SharableSocketPool.poolObjects!=null && SharableSocketPool.poolObjects.size()>0)
+                                        {
+                                            for(int i=0,j=SharableSocketPool.poolObjects.size();i<j;i++)
+                                            {
+
+                                                //burst send to everyone
+                                                PoolObject poolObject = SharableSocketPool.poolObjects.get(i);
+                                                SimpleDateFormat formatter= new SimpleDateFormat("yyyy-MM-dd HH:mm z");
+                                                Date date = new Date(System.currentTimeMillis());
+                                                //send if possible
+                                                poolObject.wsOutbound.writeTextMessage(CharBuffer
+                                                        .wrap("{\"status\":1,\"message\":\""+
+                                                                wsEndpointRequest.message+"\",\"user\":"+user.toJson()+",\"date\":\""+formatter.format(date)+"\",\"returnContext\":\"BURSTRCVD\"}"));
                                             }
                                         }else{
                                             throw new Exception("No users online");
@@ -185,5 +234,6 @@ public class ChatEndPoint extends WebSocketServlet {
         public  String token = "";
         public String message = "";
         public String toToken = "";
+        public String channel = "";
     }
 }

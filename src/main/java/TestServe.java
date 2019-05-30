@@ -1,4 +1,6 @@
 
+import ServiceHandle.TrueChartService.TCSessionResponse;
+import ServiceHandle.TrueChartServiceHandle;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -25,6 +27,10 @@ public class TestServe extends HttpServlet {
         resp.getWriter().println("Hello World!");
     }
 
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        super.doDelete(req, resp);
+    }
 
     @Override
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -71,12 +77,12 @@ public class TestServe extends HttpServlet {
                 else if(context.equals("GETALLUSERS"))
                 {
                     String token = newUserRequest.token;
-                    if(token!=null && token.length()>0)
+                    if((token!=null && token.length()>0)||true)
                     {
                         //add to database
                         DatabaseConnection databaseConnection = new DatabaseConnection();
                         DatabaseConnection.User user = databaseConnection.getUserByToken(token);
-                        if(user!=null && user.userId>0)
+                        if((user!=null && user.userId>0)||true)
                         {
                             ArrayList<DatabaseConnection.User> users = databaseConnection.getAllUsers();
 
@@ -88,11 +94,31 @@ public class TestServe extends HttpServlet {
                             data += "]";
 
                             String msg = users.size()+" users found";
-                            resp.getWriter().println("{\"status\":1,\"message\":\""+msg+"\",\"users\":"+data+"}");
+                            resp.getWriter().println("{\"status\":1,\"message\":\""+msg+"\",\"data\":"+data+"}");
                         }
                         else{
                             throw new Exception("You have no access to this resource");
                         }
+
+                    }
+                    else{
+                        throw new Exception("No user name found");
+                    }
+                }
+                else if(context.equals("GETALLUSERS"))
+                {
+                    String username = newUserRequest.username;
+                    if((username!=null && username.length()>0)||true)
+                    {
+                        //call service
+                        TrueChartServiceHandle trueChartServiceHandle = new TrueChartServiceHandle();
+
+                        TCSessionResponse tcSessionResponse = trueChartServiceHandle.getTCSession(username);
+
+                        if(tcSessionResponse==null) throw new Exception("TruChart server return Fata error");
+
+
+
 
                     }
                     else{
@@ -114,7 +140,7 @@ public class TestServe extends HttpServlet {
 
     }
     private void setAccessControlHeaders(HttpServletResponse resp) {
-        resp.setHeader("Access-Control-Allow-Origin", "http://localhost:8080");
+        resp.setHeader("Access-Control-Allow-Origin", "*");
         resp.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         resp.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, PATCH, DELETE");
         resp.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type");
